@@ -1,0 +1,48 @@
+def create_word_report(report_json, therm_images):
+    doc = Document()
+    doc.add_heading('Main Detailed Diagnostic Report (DDR)', 0)
+    
+    doc.add_heading('1. Property Issue Summary', level=1)
+    doc.add_paragraph(report_json.get('property_issue_summary', 'Not Available'))
+    
+    doc.add_heading('2. Area-wise Observations', level=1)
+    for obs in report_json.get('area_wise_observations', []):
+        doc.add_heading(obs.get('area', 'Area'), level=2)
+        doc.add_paragraph(obs.get('observation', ''))
+        doc.add_paragraph(f"Thermal Findings: {obs.get('thermal_findings', 'Not Available')}")
+        doc.add_paragraph(f"Severity: {obs.get('severity', 'Not Available')}")
+        
+        # Add relevant image (simple heuristic)
+        if therm_images:
+            try:
+                img_stream = io.BytesIO(therm_images[0]["image_bytes"])
+                doc.add_picture(img_stream, width=Inches(5.5))
+                doc.add_paragraph(f"Thermal Image (Page {therm_images[0]['page']})")
+            except:
+                doc.add_paragraph("Image Not Available")
+        doc.add_paragraph("─" * 50)
+    
+    # Rest of sections (same as before)
+    doc.add_heading('3. Probable Root Cause', level=1)
+    doc.add_paragraph(report_json.get('probable_root_cause', 'Not Available'))
+    
+    doc.add_heading('4. Severity Assessment', level=1)
+    sev = report_json.get('severity_assessment', {})
+    doc.add_paragraph(f"Level: {sev.get('level', 'Not Available')}")
+    doc.add_paragraph(f"Reasoning: {sev.get('reasoning', 'Not Available')}")
+    
+    doc.add_heading('5. Recommended Actions', level=1)
+    for action in report_json.get('recommended_actions', []):
+        doc.add_paragraph(f"• {action}")
+    
+    doc.add_heading('6. Additional Notes', level=1)
+    doc.add_paragraph(report_json.get('additional_notes', 'Not Available'))
+    
+    doc.add_heading('7. Missing or Unclear Information', level=1)
+    for item in report_json.get('missing_information', []):
+        doc.add_paragraph(f"• {item}")
+    
+    bio = io.BytesIO()
+    doc.save(bio)
+    bio.seek(0)
+    return bio
